@@ -31,7 +31,7 @@ def makeFileList(startDate,endDate,directory):
         cDate = cDate + oneDay
     return fileList
 
-def insertRowDB(row,csvD):
+def insertRowDB(row,csvD,cur):
     
 
     #variables that are inserted into the database
@@ -68,29 +68,29 @@ def insertRowDB(row,csvD):
 
     con = mdb.connect('localhost','pythonuser','snake','tradingData');
 
-    with con:
-        qdt_id = 0
-        opStatic_id = 0
-        
-        cur = con.cursor()
 
-        #quotedt insertion event
-        qdt_id = putFunc.put_dt(cur,sDateTime) 
-
-        #opStaticPs insertion
-        opStatic_id = putFunc.put_opStatic(cur, underlyingSymbol,stringExpiration,strike,option_type)
-
-        #insert into option dynamic 
-        putFunc.put_opDynamic(cur,root,openPrice,high,low,close,trade_volume,
-                              bid_size,bid,ask_size,ask,implied_underlying_price,
-                              implied_volitility,delta,gamma,theta,vega,rho,opStatic_id,qdt_id)
-        
-        #insert into underlyings
-        putFunc.put_underlying(cur,underlying_bid,underlying_ask,active_underlying_price,qdt_id)
+    qdt_id = 0
+    opStatic_id = 0
+    
 
 
+    #quotedt insertion event
+    qdt_id = putFunc.put_dt(cur,sDateTime) 
 
-def addCSVtoDB(csvFileName,csvD): #for clarity of the code this is not generalized and will only work with CBOD database 
+    #opStaticPs insertion
+    opStatic_id = putFunc.put_opStatic(cur, underlyingSymbol,stringExpiration,strike,option_type)
+
+    #insert into option dynamic 
+    putFunc.put_opDynamic(cur,root,openPrice,high,low,close,trade_volume,
+                          bid_size,bid,ask_size,ask,implied_underlying_price,
+                          implied_volitility,delta,gamma,theta,vega,rho,opStatic_id,qdt_id)
+    
+    #insert into underlyings
+    putFunc.put_underlying(cur,underlying_bid,underlying_ask,active_underlying_price,qdt_id)
+
+
+
+def addCSVtoDB(csvFileName,csvD,cur): #for clarity of the code this is not generalized and will only work with CBOD database 
     #this is an array of titles that corresponds to the order in the csv files 
     #for example tiles[3] returns a string root 
     #this makes the code much more readable 
@@ -113,7 +113,7 @@ def addCSVtoDB(csvFileName,csvD): #for clarity of the code this is not generaliz
                 if i != csvD['option_type']: #avoids the option time column when trying to float convert 
                     row[i] = float(row[i])
             
-            insertRowDB(row,csvD)
+            insertRowDB(row,csvD,cur)
 
 
 def main_func():
@@ -122,12 +122,14 @@ def main_func():
     directory = "/home/dexter/data/"
     csvD = getcsvD()
     fileList = makeFileList(startDate,endDate,directory)
-
-    #overrides filelist to speedup code for testing purposes 
-    #fileList = ["C:/data/newTest.csv"]
-    for csvFileNames in fileList: 
-        print "reading file " + csvFileNames 
-        optionD = addCSVtoDB(csvFileNames,csvD)
+    con = mdb.connect('localhost','pythonuser','snake','tradingData');
+    with con:
+        cur = con.cursor()
+        #overrides filelist to speedup code for testing purposes 
+        #fileList = ["C:/data/newTest.csv"]
+        for csvFileNames in fileList: 
+            print "reading file " + csvFileNames 
+            addCSVtoDB(csvFileNames,csvD,cur)
 
 main_func()
 
