@@ -9,6 +9,16 @@ def lastInsertId(cur):
     cur.execute("SELECT LAST_INSERT_ID()")
     return cur.fetchall()[0][0] #returns the last insert id, i.e the dt id
 
+def put_expiration(cur,sDateTime):
+    cur.execute("SELECT id FROM expiration WHERE dt = %s",(sDateTime,))
+    ids = cur.fetchall()
+    if not ids:
+        cur.execute("INSERT INTO expiration( dt ) VALUES( %s )",(sDateTime,))
+    else:
+       return ids[0]
+
+    #get the new id
+    return lastInsertId(cur)
 
 def put_dt(cur,sDateTime):
     cur.execute("SELECT id FROM quotedt WHERE dt = %s",(sDateTime,))
@@ -21,13 +31,13 @@ def put_dt(cur,sDateTime):
     #get the new id
     return lastInsertId(cur)
 
-def put_opStatic(cur, symbol,sExpiration,strike,opType):
+def put_opStatic(cur, symbol,sExpiration,strike,opType,expiration_id):
     cur.execute("SELECT id FROM opStaticPs WHERE underlyingSymbol = %s AND expiration = %s" \
                 "AND strike = %s AND op_type = %s",(symbol,sExpiration,strike,opType,))
     ids = cur.fetchall()
     if not ids:
-        cur.execute("INSERT INTO opStaticPs(underlyingSymbol,expiration,strike,op_type) "\
-            "VALUES(%s,%s,%s,%s)",(symbol,sExpiration,strike,opType,))
+        cur.execute("INSERT INTO opStaticPs(underlyingSymbol,expiration,strike,op_type,expiration_id) "\
+                    "VALUES(%s,%s,%s,%s,%s)",(symbol,sExpiration,strike,opType,expiration_id,))
     else:
         return ids[0]
 

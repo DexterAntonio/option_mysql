@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import csv
 from datetime import datetime
 from datetime import timedelta
-
+from time import gmtime, strftime 
 def getcsvD():
     titles = ['underlying_symbol','quote_datetime','root','expiration','strike','option_type','open','high','low','close','trade_volume','bid_size','bid','ask_size','ask','underlying_bid','underlying_ask','implied_underlying_price','active_underlying_price','implied_volatility',	'delta','gamma','theta','vega','rho','hash_value']
     i  = 0 
@@ -71,14 +71,18 @@ def insertRowDB(row,csvD,cur):
 
     qdt_id = 0
     opStatic_id = 0
-    
+    expiration_id = 0
 
 
     #quotedt insertion event
-    qdt_id = putFunc.put_dt(cur,sDateTime) 
+    qdt_id = putFunc.put_dt(cur,sDateTime)
 
+    #expiration insertion
+    expiration_id = putFunc.put_expiration(cur,stringExpiration)
+    
+    
     #opStaticPs insertion
-    opStatic_id = putFunc.put_opStatic(cur, underlyingSymbol,stringExpiration,strike,option_type)
+    opStatic_id = putFunc.put_opStatic(cur, underlyingSymbol,stringExpiration,strike,option_type,expiration_id)
 
     #insert into option dynamic 
     putFunc.put_opDynamic(cur,root,openPrice,high,low,close,trade_volume,
@@ -117,8 +121,8 @@ def addCSVtoDB(csvFileName,csvD,cur): #for clarity of the code this is not gener
 
 
 def main_func():
-    startDate = datetime.strptime("2009-03-20","%Y-%m-%d") #inclusive 
-    endDate = datetime.strptime("2009-03-31","%Y-%m-%d") #inclusive 
+    startDate = datetime.strptime("2009-03-02","%Y-%m-%d") #inclusive 
+    endDate = datetime.strptime("2009-03-06","%Y-%m-%d") #inclusive 
     directory = "/home/dexter/data/"
     csvD = getcsvD()
     fileList = makeFileList(startDate,endDate,directory)
@@ -128,7 +132,7 @@ def main_func():
         #overrides filelist to speedup code for testing purposes 
         #fileList = ["C:/data/newTest.csv"]
         for csvFileNames in fileList: 
-            print "reading file " + csvFileNames 
+            print "reading file " + csvFileNames + " " + strftime("%Y-%m-%d %H:%M:%S", gmtime())
             addCSVtoDB(csvFileNames,csvD,cur)
 
 main_func()
